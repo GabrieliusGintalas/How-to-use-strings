@@ -5,7 +5,7 @@ section .data
     stringFormat db "%s", 0
     InvalidInput db "Invalid Input!!!", 10, 0
     FunctionCalled db "isValid got called successfully!", 10, 0
-    CheckingDecimals db "Decimal checking", 10,
+    CheckingDecimals db "Decimal checking", 10
 
 section .bss
     align 64
@@ -38,13 +38,8 @@ section .text
         mov r13, rdi ;Set the number we are looking at to r13
         xor rcx, rcx
         xor rdx, rdx
-
-        mov rax, 0
-        mov rdi, stringFormat
-        mov rsi, r13
-        call printf
-
         mov rdi, r13 
+        xor r14, r14
 
     check_value:
         mov al, byte [rdi]  
@@ -61,26 +56,20 @@ section .text
         je found_sign
 
         cmp al, ' '
-        je found_invalid_char
+        je print_invalid
 
         cmp al, '0'
-        jl found_invalid_char   ; If the character is less than '0', it's not a digit
+        jl print_invalid   ; If the character is less than '0', it's not a digit
         cmp al, '9'
-        jg found_invalid_char   ; If the character is greater than '9', it's not a digit
+        jg print_invalid   ; If the character is greater than '9', it's not a digit
                 
         inc rdi             
         jmp check_value   
 
-    found_invalid_char:
-        ; Handle the case of an invalid character
-        mov rdi, InvalidInput  ; Load the address of InvalidInput message
-        call printf            ; Print the message
-        jmp finish             ; Jump to the end of the function to stop further execution
-
     found_decimal:
         inc rcx             ; Increment the decimal point counter
 
-        cmp rcx, 3          ; Check if this is the second decimal point
+        cmp rcx, 2          ; Check if this is the second decimal point
         jge print_invalid   ; If it is, jump to print_invalid
 
         inc rdi             ; Move to the next character in the string
@@ -100,20 +89,21 @@ section .text
         jmp check_value     ; Otherwise, continue checking the rest of the string
 
     check_decimal:
-        cmp rcx, 2
+        cmp rcx, 1
         jb print_invalid
 
         jmp finish
 
     print_invalid:
-        mov rdi, InvalidInput  ; Load the address of InvalidInput message
-        call printf            ; Print the message
+        mov r14, 1
         jmp finish       ; Jump to the end of the function to stop further execution
 
     finish:
         mov rax, 7
         mov rdx, 0
         xrstor [Save]
+
+        mov rax, r14
 
         popf                            ;Restore rflags
         pop        r15                  ;Restore r15

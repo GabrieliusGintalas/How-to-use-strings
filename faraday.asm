@@ -41,7 +41,7 @@
 ;  Assemble: nasm -f elf64 -l faraday.lis -o faraday.o faraday.asm
 
 global faraday
-extern printf, scanf, isValid
+extern printf, scanf, atof, isValid
 
 section .data
     stringFormat db "%s", 0
@@ -56,6 +56,7 @@ section .data
     ThankYou db "Thank you %s. We at Majestic are pleased to inform you that your system performed %lf joules of work.", 0
     Congrats db "Congratulations %s. Come back any time and make use of our software.",10 ,0
     TitleCard db "Everyone with title %s is welcome to use our programs at a reduced price.", 10, 0
+    Attention db "Attention %s. Invalid inputs have been encountered. Please run the program again.", 10, 0
 
 section .bss
     align 64
@@ -93,6 +94,10 @@ section .text
         mov rax, 7
         mov rdx, 0
         xsave [Save]
+
+        xorpd xmm10, xmm10
+        xorpd xmm11, xmm11
+        xorpd xmm12, xmm12
 
         mov rax, 0
         mov rdi, stringFormat
@@ -132,6 +137,12 @@ section .text
         mov rax, 0
         mov rdi, Voltage
         call isValid
+        cmp rax, 1
+        je invalid_input
+
+        mov rdi, Voltage
+        call atof
+        movsd xmm10, xmm0
 
         mov rax, 0
         mov rdi, stringFormat
@@ -144,6 +155,16 @@ section .text
         call scanf
 
         mov rax, 0
+        mov rdi, Ohms
+        call isValid
+        cmp rax, 1
+        je invalid_input
+
+        mov rdi, Ohms
+        call atof
+        movsd xmm11, xmm0
+
+        mov rax, 0
         mov rdi, stringFormat
         mov rsi, EnterTime
         call printf
@@ -153,21 +174,35 @@ section .text
         mov rsi, Time           
         call scanf
 
-        xorpd xmm10, xmm10
-        movsd xmm10, [Voltage]
+        mov rax, 0
+        mov rdi, Time
+        call isValid
+        cmp rax, 1
+        je invalid_input
 
-        xorpd xmm11, xmm11
-        movsd xmm11, [Time]
-
-        xorpd xmm12, xmm12
-        movsd xmm12, [Ohms]
+        mov rdi, Time
+        call atof
+        movsd xmm12, xmm0
 
         mulsd xmm10, xmm10 ;(V^2)
 
-        mulsd xmm10, xmm11 ;((V^2) x T)
+        mulsd xmm10, xmm12 ;((V^2) x T)
     
-        divsd xmm10, xmm12 ;((V^2) x T) / R
+        divsd xmm10, xmm11 ;((V^2) x T) / R
 
+        movsd qword [Joules], xmm10
+
+        jmp exit
+
+    invalid_input:
+        mov rax, 0
+        mov rdi, Attention
+        mov rsi, Profession
+        call printf
+
+        jmp exit
+
+    exit:
         mov rax, 7
         mov rdx, 0
         xrstor [Save]

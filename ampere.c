@@ -50,7 +50,7 @@ int main(){
     printf("Welcome to Majestic Power Systems, LLC \n");
     printf("Project Director, Gabrielius Gintalas, Senior Software Engineer. \n");
     double joules = faraday();
-    printf("The main function received %f and will keep it for a while. \n", joules);
-    printf("A zero will be returned to the operating system.");
+    printf("The main function received %f and will keep it for future study. \n", joules);
+    printf("A zero will be returned to the operating system. Bye");
     return 0;   
 }
